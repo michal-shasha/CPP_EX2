@@ -3,6 +3,8 @@
 
 #include "Graph.hpp"
 #include <sstream>
+#include "numeric"
+#include "algorithm"
 using namespace std;
 
 namespace ariel
@@ -63,11 +65,6 @@ namespace ariel
             throw invalid_argument("Invalid graph: The graph is not a square matrix.");
         }
 
-        // Check if the matrix is symmetric
-        // if (!isSquareMatrix(g)) {
-        //     throw invalid_argument("Invalid graph: The graph is not a square matrix.");
-        // }
-
         // Check if the matrix contains edges or weights
         for (size_t i = 0; i < n; i++)
         {
@@ -89,9 +86,12 @@ namespace ariel
         }
 
         this->numVertices = n;
-
+        
         // Determine if the graph is directed or undirected
         this->directed = !isSymmetricMatrix(g);
+        if(!this->directed){
+            this->numEdges /= 2;
+        }
     }
 
     void Graph::setMatrix(vector<vector<int>> &mat)
@@ -348,32 +348,7 @@ Graph& Graph::operator-=(int scalar)
 
     bool Graph::operator==(Graph &other)
     {
-        // Check if the graphs are of the same size
-        if (this->numVertices != other.numVertices)
-        {
-            return false;
-        }
-
-        // Check if the graphs have the same adjacency matrix size
-        if (this->adjMatrix.size() != other.adjMatrix.size() ||
-            this->adjMatrix[0].size() != other.adjMatrix[0].size())
-        {
-            return false;
-        }
-
-        // Check if the graphs have the same adjacency matrix values
-        for (size_t i = 0; i < this->adjMatrix.size(); ++i)
-        {
-            for (size_t j = 0; j < this->adjMatrix[i].size(); ++j)
-            {
-                if (this->adjMatrix[i][j] != other.adjMatrix[i][j])
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+      return this->adjMatrix == other.adjMatrix || (!(*this < other) && !(other < *this));
     }
 
     bool Graph::operator!=(Graph &other)
@@ -381,43 +356,45 @@ Graph& Graph::operator-=(int scalar)
         return !(*this == other);
     }
 
-    bool Graph::isGraphContained(Graph &smallerGraph, Graph &largerGraph)
+    bool Graph::isGraphContained( Graph &largerGraph)
     {
-        // Check if smallerGraph is contained in largerGraph
-        for (size_t i = 0; i < smallerGraph.adjMatrix.size(); ++i)
+        
+        if (this->getSize() > largerGraph.getSize())
         {
-            for (size_t j = 0; j < smallerGraph.adjMatrix[i].size(); ++j)
+            return false;
+        }
+
+        // Create a vector for vertex mapping
+        std::vector<size_t> mapping(largerGraph.getSize());
+        std::iota(mapping.begin(), mapping.end(), 0);
+
+        // Try all permutations of the vertex mapping
+        do
+        {
+            bool is_subgraph = true;
+            for (size_t i = 0; i < this->getSize() && is_subgraph; ++i)
             {
-                if (smallerGraph.adjMatrix[i][j] != largerGraph.adjMatrix[i][j])
+                for (size_t j = 0; j < this->getSize() && is_subgraph; ++j)
                 {
-                    return false;
+                    if (this->adjMatrix[i][j] != 0 && largerGraph.adjMatrix[mapping[i]][mapping[j]] == 0)
+                    {
+                        is_subgraph = false;
+                    }
                 }
             }
-        }
-        return true;
+            if (is_subgraph)
+            {
+                return true;
+            }
+        } while (std::next_permutation(mapping.begin(), mapping.end()));
+
+        return false;
     }
+    
 
     bool Graph::operator>(Graph &other)
     {
-        // Check if the graph is greater than another graph based on containment, edge count, and order of the adjacency matrix
-        if (isGraphContained(*this, other))
-        {
-            return false; // If this graph is contained in the other, it is not greater
-        }
-
-        if (isGraphContained(other, *this))
-        {
-            return true; // If the other graph is contained in this, this graph is greater
-        }
-
-        // If neither graph is contained in the other, compare edge count
-        if (this->numEdges != other.numEdges)
-        {
-            return this->numEdges > other.numEdges;
-        }
-
-        // If the number of edges is equal, compare the order of the adjacency matrix
-        return this->adjMatrix.size() > other.adjMatrix.size();
+      return other<*this;
     }
 
     bool Graph::operator<=(Graph &other)
@@ -428,13 +405,19 @@ Graph& Graph::operator-=(int scalar)
 
     bool Graph::operator<(Graph &other)
     {
-        // Check if the graph is less than another graph based on containment, edge count, and order of the adjacency matrix
-        if (isGraphContained(*this, other))
+        if(this->adjMatrix==other.adjMatrix)
         {
-            return true; // If this graph is contained in the other, it is less
+            return false;
+        }
+         
+
+        // Check if the graph is less than another graph based on containment, edge count, and order of the adjacency matrix
+        if (isGraphContained(other)&& !(other.isGraphContained(*this)))
+        {
+            return true;
         }
 
-        if (isGraphContained(other, *this))
+        if (other.isGraphContained(*this)&&!(isGraphContained(other)))
         {
             return false; // If the other graph is contained in this, this graph is greater
         }
@@ -464,6 +447,10 @@ Graph& Graph::operator-=(int scalar)
                 adjMatrix[i][j]++;
             }
         }
+        for (size_t i = 0; i < this->getSize(); ++i)
+        {
+        this->adjMatrix[i][i] = 0;
+        }
         return *this;
     }
 
@@ -475,6 +462,10 @@ Graph& Graph::operator-=(int scalar)
             {
                 adjMatrix[i][j]--;
             }
+        }
+        for (size_t i = 0; i < this->getSize(); ++i)
+        {
+          this->adjMatrix[i][i] = 0;
         }
 
         return *this;
@@ -490,6 +481,10 @@ Graph& Graph::operator-=(int scalar)
                 adjMatrix[i][j]++;
             }
         }
+        for (size_t i = 0; i < this->getSize(); ++i)
+        {
+          this->adjMatrix[i][i] = 0;
+        }
         return temp;
     }
 
@@ -502,6 +497,10 @@ Graph& Graph::operator-=(int scalar)
             {
                 adjMatrix[i][j]--;
             }
+        }
+        for (size_t i = 0; i < this->getSize(); ++i)
+        {
+           this->adjMatrix[i][i] = 0;
         }
         return temp;
     }

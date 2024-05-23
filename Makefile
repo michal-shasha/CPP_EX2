@@ -1,5 +1,5 @@
-//325763498
-//michalshasha8@gmail.com
+#325763498
+#michalshasha8@gmail.com
 
 #!make -f
 

@@ -49,7 +49,7 @@ public:
     Graph operator--(int);
 
 
-    bool isGraphContained( Graph& smallerGraph, Graph& largerGraph);
+    bool isGraphContained(Graph& largerGraph);
 
     
 

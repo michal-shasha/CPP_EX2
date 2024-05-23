@@ -88,7 +88,7 @@ TEST_CASE("Test graph comparison operators") {
     CHECK_FALSE(g1 > g2);
 
     // Check less than
-    CHECK(g1 < g1);
+    CHECK_FALSE(g1 < g1);
     CHECK(g1 < g2);
 
     // Check greater than or equal to
@@ -98,8 +98,22 @@ TEST_CASE("Test graph comparison operators") {
     // Check less than or equal to
     CHECK(g1 <= g1);
     CHECK(g1 <= g2);
-}
 
+    ariel::Graph g4;
+    vector<vector<int>> graph4 = {
+        {0, 1, 0},
+        {1, 0, 1},
+        {0, 1, 0}};
+    g4.loadGraph(graph4);
+    ariel::Graph g8;
+    vector<vector<int>> graph5 = {
+        {0, 1, 0, 0},
+        {1, 0, 0, 0},
+        {0, 0, 0, 1},
+        {0, 0, 1, 0}};
+    g5.loadGraph(graph5);
+    CHECK(g4 < g5);
+ }   
 TEST_CASE("Test compound addition and subtraction operators combined") {
     ariel::Graph g1, g2;
     vector<vector<int>> Graph1 = {
@@ -236,3 +250,19 @@ TEST_CASE("Test unary minus operator")
 
     CHECK(g2.printGraph() == "[0, -1, 0]\n[-1, 0, -1]\n[0, -1, 0]");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
